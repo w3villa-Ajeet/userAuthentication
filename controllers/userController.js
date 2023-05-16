@@ -1,7 +1,9 @@
 import userModel from "../models/userModel.js";
 import { comparePassword, hashPassword } from "../utils/authUtils.js";
 import JWT from "jsonwebtoken";
+import { sendMail } from "../utils/sendMail.js";
 
+//USER REGISTRATION
 export const registerController = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -27,12 +29,18 @@ export const registerController = async (req, res) => {
     }
     //register user
     const hashedPassword = await hashPassword(password);
-    //save
+
+    const otp = Math.floor(Math.random() * 1000000);
+    //creating new user
     const user = await new userModel({
       name,
       email,
       password: hashedPassword,
+      otp,
+      otp_expiry: new Date(Date.now() + process.env.OTP_EXPIRE * 60 * 1000),
     }).save();
+
+    await sendMail(name, email, otp);
 
     const userData = {
       _id: user._id,
@@ -42,7 +50,8 @@ export const registerController = async (req, res) => {
 
     res.status(201).send({
       success: true,
-      message: "User Register Successfully",
+      message:
+        "User Register Successfully,otp has been send to your mail please verify,it will expire within 5 minutes",
       user: userData,
     });
   } catch (error) {
@@ -55,7 +64,36 @@ export const registerController = async (req, res) => {
   }
 };
 
-//POST LOGIN
+//VERYFY EMAIL OTP
+export const verifyOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    const numberOtp = Number(otp);
+
+    const user = await userModel.findOne({ email });
+
+    if (user.otp !== numberOtp || user.otp_expiry < Date.now()) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid OTP or has been Expired" });
+    }
+
+    user.verified = true;
+    user.otp = null;
+    user.otp_expiry = null;
+
+    await user.save();
+    res.status(200).send({
+      success: true,
+      message: "please login",
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+//USER LOGIN
 export const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
