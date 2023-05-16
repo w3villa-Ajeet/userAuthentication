@@ -142,3 +142,61 @@ export const loginController = async (req, res) => {
     });
   }
 };
+
+//forgot password
+export const forgetPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    console.log(email);
+
+    const user = await userModel.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Invalid Email" });
+    }
+
+    const otp = Math.floor(Math.random() * 1000000);
+
+    user.resetPasswordOtp = otp;
+    user.resetPasswordExpiry = Date.now() + 10 * 60 * 1000;
+
+    await user.save();
+
+    const message = `Your OTP for reseting the password ${otp}. If you did not request for this, please ignore this email.`;
+
+    await sendMail(user.name, email, otp);
+
+    res.status(200).json({ success: true, message: `OTP sent to ${email}` });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+//reset password
+export const resetPassword = async (req, res) => {
+  try {
+    const { otp, newPassword } = req.body;
+
+    const user = await userModel.findOne({
+      resetPasswordOtp: otp,
+      resetPasswordExpiry: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Otp Invalid or has been Expired" });
+    }
+    const hashedPassword = await hashPassword(newPassword);
+    user.password = hashedPassword;
+    user.resetPasswordOtp = null;
+    user.resetPasswordExpiry = null;
+    await user.save();
+
+    res
+      .status(200)
+      .json({ success: true, message: `Password Changed Successfully` });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

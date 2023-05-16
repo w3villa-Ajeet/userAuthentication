@@ -1,12 +1,18 @@
 import SibApiV3Sdk from "sib-api-v3-sdk";
+import { config } from "dotenv";
 
-const sendbluekey = process.env.SENDBLUE_KEY;
+config({
+  path: ".env",
+});
+
+// const sendbluekey = process.env.SENDBLUE_KEY;
+// console.log(sendbluekey);
 
 let defaultClient = SibApiV3Sdk.ApiClient.instance;
 
 let apiKey = defaultClient.authentications["api-key"];
-apiKey.apiKey = sendbluekey;
-gi
+apiKey.apiKey = process.env.SENDBLUE_KEY;
+
 export const sendMail = async (name, email, otp) => {
   try {
     new SibApiV3Sdk.TransactionalEmailsApi().sendTransacEmail({
