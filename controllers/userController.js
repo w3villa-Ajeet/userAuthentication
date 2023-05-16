@@ -200,3 +200,63 @@ export const resetPassword = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+//get all user without any condition
+
+// export const getAllUser = async (req, res) => {
+//   try {
+//     const AllUser = await userModel.find({});
+//     console.log(AllUser);
+//     res.status(200).send({ success: true });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
+//all user with pagination
+// product list base on page
+export const getAllUser = async (req, res) => {
+  try {
+    const perPage = 3;
+    const page = req.query.page ? req.query.page : 1;
+    const allUser = await userModel
+      .find({})
+      .skip((page - 1) * perPage)
+      .limit(perPage)
+      .sort({ createdAt: -1 });
+    res.status(200).send({
+      success: true,
+      allUser,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(400).send({
+      success: false,
+      message: "error in per page ctrl",
+      error,
+    });
+  }
+};
+
+//getuserby search
+export const getSearchedUser = async (req, res) => {
+  try {
+    const { keyword } = req.params;
+    console.log(keyword);
+    const resutls = await userModel.find({
+      $or: [
+        { name: { $regex: keyword, $options: "i" } },
+        { email: { $regex: keyword, $options: "i" } },
+      ],
+    });
+
+    res.status(200).send({ resutls });
+  } catch (error) {
+    console.log(error);
+    res.status(400).send({
+      success: false,
+      message: "Error In Search user API",
+      error,
+    });
+  }
+};

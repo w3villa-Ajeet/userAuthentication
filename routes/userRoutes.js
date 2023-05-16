@@ -1,6 +1,8 @@
 import express from "express";
 import {
   forgetPassword,
+  getAllUser,
+  getSearchedUser,
   loginController,
   registerController,
   resetPassword,
@@ -24,5 +26,11 @@ router.post("/resetPassword", resetPassword);
 resetPassword;
 //LOGIN || POST
 router.post("/login", loginController);
+
+//get all user
+router.post("/getAllUser", getAllUser);
+
+//get all user
+router.post("/getSearchedUser/:keyword", getSearchedUser);
 
 export default router;
