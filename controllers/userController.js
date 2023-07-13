@@ -3,6 +3,9 @@ import { comparePassword, hashPassword } from "../utils/authUtils.js";
 import JWT from "jsonwebtoken";
 import { sendMail } from "../utils/sendMail.js";
 
+// import { testing } from "../utils/sendSms.js";
+// import twilio from "twilio";
+//await userModel.deleteOne({ email });
 //USER REGISTRATION
 export const registerController = async (req, res) => {
   try {
@@ -31,6 +34,7 @@ export const registerController = async (req, res) => {
     const hashedPassword = await hashPassword(password);
 
     const otp = Math.floor(Math.random() * 1000000);
+    const phoneOtp = Math.floor(Math.random() * 1000000);
     //creating new user
     const user = await new userModel({
       name,
@@ -41,6 +45,8 @@ export const registerController = async (req, res) => {
     }).save();
 
     await sendMail(name, email, otp);
+
+    // await testing();
 
     const userData = {
       _id: user._id,
@@ -68,6 +74,7 @@ export const registerController = async (req, res) => {
 export const verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
+    console.log(typeof email, typeof otp);
 
     const numberOtp = Number(otp);
 
@@ -97,6 +104,7 @@ export const verifyOtp = async (req, res) => {
 export const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
+
     //validation
     if (!email || !password) {
       return res.status(404).send({
@@ -106,6 +114,7 @@ export const loginController = async (req, res) => {
     }
     //check user
     const user = await userModel.findOne({ email });
+    console.log(user);
     if (!user) {
       return res.status(404).send({
         success: false,
